@@ -52,6 +52,7 @@ class RequestsRecorder:
             assert isinstance(cron, dict)
             for key in ["name", "url", "record_dir", "output_file_format", "cron_expr"]:
                 assert key in cron
+            cron["record_dir"] = Path(cron["record_dir"]).expanduser().absolute()
 
             def recorder(cron):
                 self.record(cron)
@@ -67,7 +68,7 @@ class RequestsRecorder:
             now = datetime.datetime.now()
             output_file = cron["output_file_format"].format(**cron)
             output_file = now.strftime(output_file)
-            output_file = Path(output_file)
+            output_file = cron["record_dir"] / Path(output_file)
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_bytes(result.content)
         else:
