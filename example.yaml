@@ -1,14 +1,20 @@
-- 
-  name: "some_data"
-  url: "https://example.com/somedata.csv"
-  record_dir: "~/hist_data/"
-  output_file_format: "{name}/{name}_%Y-%m-%d.csv"
-  cron_expr: "0 * * * * * *"
-  encoding: "ms932"
-- 
-  name: "some_data_2"
-  url: "https://example.com/somedata2.csv"
-  record_dir: "~/hist_data/"
-  output_file_format: "{name}/{name}_%Y-%m-%d.csv"
-  cron_expr: "0 * * * * * *"
-  encoding: "ms932"
+gmail_address:
+gmail_password:
+tasks:
+  - 
+    name: "some_data"
+    url: "https://example.com/somedata.csv"
+    record_dir: "~/hist_data/"
+    output_file_format: "{name}/{name}_%Y-%m-%d.csv"
+    cron_expr: "0 * * * * * *"
+    encoding: "ms932"
+  - 
+    name: "some_data_2"
+    url: "https://www.google.com/"
+    record_dir: "~/hist_data/"
+    output_file_format: "{name}/{name}_%Y-%m-%d.txt"
+    cron_expr: "@reboot"
+    target_elements: 
+      - 
+        element: "#gws-output-pages-elements-homepage_additional_languages__als"
+        index: 3

@@ -8,12 +8,15 @@ __all__ = ["RequestsRecorder"]
 import datetime
 import logging
 import os
+import sys
+import traceback
 from pathlib import Path
 
 import crython
 import kanilog
 import stdlogging
 import yaml
+import yagmail
 from kanirequests import KaniRequests
 
 
@@ -37,6 +40,10 @@ class RequestsRecorder:
         else:
             self.headers = headers
         self.session = KaniRequests(headers=self.headers)
+        self.gmail_address = None
+        self.gmail_password = None
+        self.mail_to = None
+        self.yag = None
 
     def load_yaml(self, yaml_path):
         now = datetime.datetime.now()
@@ -46,6 +53,19 @@ class RequestsRecorder:
         assert isinstance(yaml_path, Path)
 
         cron_data = yaml.safe_load(yaml_path.read_text())
+        if "gmail_address" in cron_data:
+            self.gmail_address = cron_data["gmail_address"]
+            if "mail_to" in cron_data:
+                self.mail_to = cron_data["mail_to"]
+            if "gmail_password" in cron_data:
+                self.gmail_password = cron_data["gmail_password"]
+            elif "gmail_oauth" in cron_data:
+                self.yag = yagmail.SMTP(
+                    self.gmail_address, oauth2_file=cron_data["gmail_oauth"]
+                )
+            else:
+                raise AssertionError
+            cron_data = cron_data["tasks"]
 
         for cron in cron_data:
             assert isinstance(cron, dict)
@@ -69,12 +89,40 @@ class RequestsRecorder:
             output_file = now.strftime(output_file)
             output_file = cron["record_dir"] / Path(output_file)
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            if "encoding" in cron:
-                output_file.write_text(result.content.decode(cron["encoding"]))
+            if "target_elements" in cron:
+                elem = result.html
+                try:
+                    if isinstance(cron["target_elements"], dict):
+                        target = cron["target_elements"]
+                        if "index" not in target:
+                            target["index"] = 0
+                        elem = elem.find(target["element"])[target["index"]]
+                    elif isinstance(cron["target_elements"], list):
+                        for target in cron["target_elements"]:
+                            if "index" not in target:
+                                target["index"] = 0
+                            elem = elem.find(target["element"])[target["index"]]
+                    else:
+                        raise AssertionError
+                    output_file.write_text(elem.text)
+                except Exception:
+                    self.log.error(sys.exc_info())
+                    self.log.error(traceback.format_exc())
+                    error_msg = f"cron:\n{cron}\nsys.exc_info:\n{sys.exc_info()}\ntraceback:\n{traceback.format_exc()}"
+                    if self.yag is not None:
+                        self.yag.send(to=self.mail_to, subject="periocial_recorder failed.", contents=error_msg)
+                        self.log.info("Sent error mail.")
             else:
-                output_file.write_bytes(result.content)
+                if "encoding" in cron:
+                    output_file.write_text(result.content.decode(cron["encoding"]))
+                else:
+                    output_file.write_bytes(result.content)
         else:
-            self.log.error(f"Requests failed {cron=} status_code:{result.status_code}")
+            error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
+            self.log.error(error_msg)
+            if self.yag is not None:
+                self.yag.send(to=self.mail_to, subject="periocial_recorder failed.", contents=error_msg)
+                self.log.info("Sent error mail.")
 
     def start(self):
         crython.start()
