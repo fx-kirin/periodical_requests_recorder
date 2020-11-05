@@ -4,3 +4,4 @@ kanilog
 kanirequests
 pytest
 stdlogging
+yagmail

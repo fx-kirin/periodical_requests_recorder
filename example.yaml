@@ -1,5 +1,5 @@
-gmail_address:
-gmail_password:
+gmail_address: example@gmail.com
+gmail_oauth: "~/yagmail_secret.json"
 tasks:
   - 
     name: "some_data"
