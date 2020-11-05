@@ -4,9 +4,11 @@
   record_dir: "~/hist_data/"
   output_file_format: "{name}/{name}_%Y-%m-%d.csv"
   cron_expr: "0 * * * * * *"
+  encoding: "ms932"
 - 
   name: "some_data_2"
   url: "https://example.com/somedata2.csv"
   record_dir: "~/hist_data/"
   output_file_format: "{name}/{name}_%Y-%m-%d.csv"
   cron_expr: "0 * * * * * *"
+  encoding: "ms932"

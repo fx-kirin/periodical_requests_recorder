@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 __author__ = "fx-kirin <fx.kirin@gmail.com>"
-__all__ = []
+__all__ = ["RequestsRecorder"]
 
 
 import datetime
@@ -10,12 +10,11 @@ import logging
 import os
 from pathlib import Path
 
+import crython
 import kanilog
 import stdlogging
 import yaml
 from kanirequests import KaniRequests
-
-import crython
 
 
 class RequestsRecorder:
@@ -70,7 +69,10 @@ class RequestsRecorder:
             output_file = now.strftime(output_file)
             output_file = cron["record_dir"] / Path(output_file)
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            output_file.write_bytes(result.content)
+            if "encoding" in cron:
+                output_file.write_text(result.content.decode(cron["encoding"]))
+            else:
+                output_file.write_bytes(result.content)
         else:
             self.log.error(f"Requests failed {cron=} status_code:{result.status_code}")
 
