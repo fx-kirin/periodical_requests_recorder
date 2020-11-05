@@ -35,7 +35,7 @@ tasks:
 
 Request result will be stored in the `record_dir` with your `output_file_format`.
 
-If you set up `yagmail`, error messages will be sent your address.
+If you set up `yagmail`, error messages will be sent to your address.
 
 `cron_expr` format is the same as [Crython](https://github.com/ahawker/crython).
 
