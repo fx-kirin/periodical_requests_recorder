@@ -79,6 +79,9 @@ class RequestsRecorder:
             recorder.__name__ = cron["name"]
             crython.job(expr=cron["cron_expr"], cron=cron)(recorder)
             self.log.info(f"cron registered {cron=}")
+            if "get_data_on_start" in cron and cron["get_data_on_start"]:
+                self.log.info("Startup recording")
+                self.record(cron)
 
     def record(self, cron):
         self.log.info(f"Recording {cron=}")
