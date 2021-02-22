@@ -1,11 +1,6 @@
 """periodical_requests_recorder - """
-
-__version__ = "0.1.0"
-__author__ = "fx-kirin <fx.kirin@gmail.com>"
-__all__ = ["RequestsRecorder"]
-
-
 import datetime
+import json
 import logging
 import os
 import sys
@@ -15,9 +10,13 @@ from pathlib import Path
 import crython
 import kanilog
 import stdlogging
-import yaml
 import yagmail
+import yaml
 from kanirequests import KaniRequests
+
+__version__ = "0.2.2"
+__author__ = "fx-kirin <fx.kirin@gmail.com>"
+__all__ = ["RequestsRecorder"]
 
 
 class RequestsRecorder:
@@ -85,47 +84,63 @@ class RequestsRecorder:
 
     def record(self, cron):
         self.log.info(f"Recording {cron=}")
-        result = self.session.get(cron["url"])
-        if result.status_code == 200:
-            now = datetime.datetime.now()
-            output_file = cron["output_file_format"].format(**cron)
-            output_file = now.strftime(output_file)
-            output_file = cron["record_dir"] / Path(output_file)
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            if "target_elements" in cron:
-                elem = result.html
-                try:
-                    if isinstance(cron["target_elements"], dict):
-                        target = cron["target_elements"]
-                        if "index" not in target:
-                            target["index"] = 0
-                        elem = elem.find(target["element"])[target["index"]]
-                    elif isinstance(cron["target_elements"], list):
-                        for target in cron["target_elements"]:
+        if "url_format" in cron:
+            iteration = cron["iteration"]
+        else:
+            result = self.session.get(cron["url"])
+            if result.status_code == 200:
+                now = datetime.datetime.now()
+                output_file = cron["output_file_format"].format(**cron)
+                output_file = now.strftime(output_file)
+                output_file = cron["record_dir"] / Path(output_file)
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                if "target_elements" in cron:
+                    elem = result.html
+                    try:
+                        if isinstance(cron["target_elements"], dict):
+                            target = cron["target_elements"]
                             if "index" not in target:
                                 target["index"] = 0
                             elem = elem.find(target["element"])[target["index"]]
-                    else:
-                        raise AssertionError
-                    output_file.write_text(elem.text)
-                except Exception:
-                    self.log.error(sys.exc_info())
-                    self.log.error(traceback.format_exc())
-                    error_msg = f"cron:\n{cron}\nsys.exc_info:\n{sys.exc_info()}\ntraceback:\n{traceback.format_exc()}"
-                    if self.yag is not None:
-                        self.yag.send(to=self.mail_to, subject="periocial_recorder failed.", contents=error_msg)
-                        self.log.info("Sent error mail.")
-            else:
-                if "encoding" in cron:
-                    output_file.write_text(result.content.decode(cron["encoding"]))
+                            output_file.write_text(elem.text)
+                        elif isinstance(cron["target_elements"], list):
+                            output = {}
+                            for target in cron["target_elements"]:
+                                if "name" not in target:
+                                    raise AssertionError("target must has name")
+                                if "index" not in target:
+                                    target["index"] = 0
+                                elem = elem.find(target["element"])[target["index"]]
+                                output[target["name"]] = elem.text
+                            output_file.write_text(json.dumps(output))
+                        else:
+                            raise AssertionError
+                    except Exception:
+                        self.log.error(sys.exc_info())
+                        self.log.error(traceback.format_exc())
+                        error_msg = f"cron:\n{cron}\nsys.exc_info:\n{sys.exc_info()}\ntraceback:\n{traceback.format_exc()}"
+                        if self.yag is not None:
+                            self.yag.send(
+                                to=self.mail_to,
+                                subject="periocial_recorder failed.",
+                                contents=error_msg,
+                            )
+                            self.log.info("Sent error mail.")
                 else:
-                    output_file.write_bytes(result.content)
-        else:
-            error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
-            self.log.error(error_msg)
-            if self.yag is not None:
-                self.yag.send(to=self.mail_to, subject="periocial_recorder failed.", contents=error_msg)
-                self.log.info("Sent error mail.")
+                    if "encoding" in cron:
+                        output_file.write_text(result.content.decode(cron["encoding"]))
+                    else:
+                        output_file.write_bytes(result.content)
+            else:
+                error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
+                self.log.error(error_msg)
+                if self.yag is not None:
+                    self.yag.send(
+                        to=self.mail_to,
+                        subject="periocial_recorder failed.",
+                        contents=error_msg,
+                    )
+                    self.log.info("Sent error mail.")
 
     def start(self):
         crython.start()

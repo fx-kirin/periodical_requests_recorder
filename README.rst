@@ -19,20 +19,30 @@ yaml data format example.
 
 .. code-block:: yaml
 
-   - 
-     name: "some_data"
-     url: "https://example.com/somedata.csv"
-     record_dir: "~/hist_data/"
-     output_file_format: "{name}/{name}_%Y-%m-%d.csv"
-     cron_expr: "0 * * * * * *"
-   - 
-     name: "some_data_2"
-     url: "https://example.com/somedata2.csv"
-     record_dir: "~/hist_data/"
-     output_file_format: "{name}/{name}_%Y-%m-%d.csv"
-     cron_expr: "0 * * * * * *"
+   gmail_address: example@gmail.com
+   gmail_oauth: "~/yagmail_secret.json"
+   tasks:
+     - 
+       name: "some_data"
+       url: "https://example.com/somedata.csv"
+       record_dir: "~/hist_data/"
+       output_file_format: "{name}/{name}_%Y-%m-%d.csv"
+       cron_expr: "0 * * * * * *"
+       encoding: "ms932"
+     - 
+       name: "some_data_2"
+       url: "https://www.google.com/"
+       record_dir: "~/hist_data/"
+       output_file_format: "{name}/{name}_%Y-%m-%d.txt"
+       cron_expr: "@reboot"
+       target_elements: 
+         - 
+           element: "#gws-output-pages-elements-homepage_additional_languages__als"
+           index: 3
 
 Request result will be stored in the ``record_dir`` with your ``output_file_format``.
+
+If you set up ``yagmail``\ , error messages will be sent to your address.
 
 ``cron_expr`` format is the same as `Crython <https://github.com/ahawker/crython>`_.
 
