@@ -9,12 +9,13 @@ from pathlib import Path
 
 import crython
 import kanilog
+import pandas as pd
 import stdlogging
 import yagmail
 import yaml
 from kanirequests import KaniRequests
 
-__version__ = "0.2.2"
+__version__ = "0.2.4"
 __author__ = "fx-kirin <fx.kirin@gmail.com>"
 __all__ = ["RequestsRecorder"]
 
@@ -87,6 +88,10 @@ class RequestsRecorder:
         if "url_format" in cron:
             iteration = cron["iteration"]
         else:
+            use_pandas = False
+            if "pandas_csv" in cron:
+                use_pandas = cron["pandas_csv"]
+
             result = self.session.get(cron["url"])
             if result.status_code == 200:
                 now = datetime.datetime.now()
@@ -102,7 +107,11 @@ class RequestsRecorder:
                             if "index" not in target:
                                 target["index"] = 0
                             elem = elem.find(target["element"])[target["index"]]
-                            output_file.write_text(elem.text)
+                            if use_pandas:
+                                df = pd.read_html(elem.html)[0]
+                                df.to_csv(output_file)
+                            else:
+                                output_file.write_text(elem.text)
                         elif isinstance(cron["target_elements"], list):
                             output = {}
                             for target in cron["target_elements"]:
