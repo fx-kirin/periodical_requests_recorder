@@ -92,16 +92,16 @@ class RequestsRecorder:
             if "pandas_csv" in cron:
                 use_pandas = cron["pandas_csv"]
 
-            result = self.session.get(cron["url"])
-            if result.status_code == 200:
-                now = datetime.datetime.now()
-                output_file = cron["output_file_format"].format(**cron)
-                output_file = now.strftime(output_file)
-                output_file = cron["record_dir"] / Path(output_file)
-                output_file.parent.mkdir(parents=True, exist_ok=True)
-                if "target_elements" in cron:
-                    elem = result.html
-                    try:
+            try:
+                result = self.session.get(cron["url"])
+                if result.status_code == 200:
+                    now = datetime.datetime.now()
+                    output_file = cron["output_file_format"].format(**cron)
+                    output_file = now.strftime(output_file)
+                    output_file = cron["record_dir"] / Path(output_file)
+                    output_file.parent.mkdir(parents=True, exist_ok=True)
+                    if "target_elements" in cron:
+                        elem = result.html
                         if isinstance(cron["target_elements"], dict):
                             target = cron["target_elements"]
                             if "index" not in target:
@@ -124,11 +124,11 @@ class RequestsRecorder:
                             output_file.write_text(json.dumps(output))
                         else:
                             raise AssertionError
-                    except Exception:
-                        self.log.error(sys.exc_info())
-                        self.log.error(traceback.format_exc())
-                        error_msg = f"cron:\n{cron}\nsys.exc_info:\n{sys.exc_info()}\ntraceback:\n{traceback.format_exc()}"
-                        if self.yag is not None:
+            except Exception:
+                self.log.error(sys.exc_info())
+                self.log.error(traceback.format_exc())
+                error_msg = f"cron:\n{cron}\nsys.exc_info:\n{sys.exc_info()}\ntraceback:\n{traceback.format_exc()}"
+                if self.yag is not None:
                             self.yag.send(
                                 to=self.mail_to,
                                 subject="periocial_recorder failed.",
