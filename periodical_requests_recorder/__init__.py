@@ -137,6 +137,16 @@ class RequestsRecorder:
                                 kanihealth.update_health(elem.text)
                         else:
                             raise AssertionError
+                else:
+                    error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
+                    self.log.error(error_msg)
+                    if self.yag is not None:
+                        self.yag.send(
+                            to=self.mail_to,
+                            subject="periocial_recorder failed.",
+                            contents=error_msg,
+                        )
+                        self.log.info("Sent error mail.")
             except Exception:
                 self.log.error(sys.exc_info())
                 self.log.error(traceback.format_exc())
