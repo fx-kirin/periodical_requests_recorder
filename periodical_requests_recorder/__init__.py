@@ -153,16 +153,6 @@ class RequestsRecorder:
                         output_file.write_text(result.content.decode(cron["encoding"]))
                     else:
                         output_file.write_bytes(result.content)
-            else:
-                error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
-                self.log.error(error_msg)
-                if self.yag is not None:
-                    self.yag.send(
-                        to=self.mail_to,
-                        subject="periocial_recorder failed.",
-                        contents=error_msg,
-                    )
-                    self.log.info("Sent error mail.")
 
     def start(self):
         crython.start()
