@@ -31,7 +31,7 @@ def get_requires():
 
 setup(
     name="periodical_requests_recorder",
-    version="0.2.9",
+    version="0.3.0",
     url="https://github.com/fx-kirin/periodical_requests_recorder",
     license='MIT',
 

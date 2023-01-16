@@ -121,8 +121,8 @@ class RequestsRecorder:
                                 df.to_csv(output_file)
                             else:
                                 output_file.write_text(elem.text)
-                                if USE_HEALTH_CHECK:
-                                    kanihealth.update_health(cron["name"])
+                            if USE_HEALTH_CHECK:
+                                kanihealth.update_health(cron["name"])
                         elif isinstance(cron["target_elements"], list):
                             output = {}
                             for target in cron["target_elements"]:
@@ -137,6 +137,15 @@ class RequestsRecorder:
                                 kanihealth.update_health(cron["name"])
                         else:
                             raise AssertionError
+                    else:
+                        if "encoding" in cron:
+                            output_file.write_text(result.content.decode(cron["encoding"]))
+                            if USE_HEALTH_CHECK:
+                                kanihealth.update_health(cron["name"])
+                        else:
+                            output_file.write_bytes(result.content)
+                            if USE_HEALTH_CHECK:
+                                kanihealth.update_health(cron["name"])
                 else:
                     error_msg = f"Requests failed {cron=} status_code:{result.status_code}"
                     self.log.error(error_msg)
@@ -158,11 +167,6 @@ class RequestsRecorder:
                                 contents=error_msg,
                             )
                             self.log.info("Sent error mail.")
-                else:
-                    if "encoding" in cron:
-                        output_file.write_text(result.content.decode(cron["encoding"]))
-                    else:
-                        output_file.write_bytes(result.content)
 
     def start(self):
         crython.start()
