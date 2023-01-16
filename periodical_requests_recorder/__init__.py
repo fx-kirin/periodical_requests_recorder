@@ -122,7 +122,7 @@ class RequestsRecorder:
                             else:
                                 output_file.write_text(elem.text)
                                 if USE_HEALTH_CHECK:
-                                    kanihealth.update_health(elem.text)
+                                    kanihealth.update_health(cron["name"])
                         elif isinstance(cron["target_elements"], list):
                             output = {}
                             for target in cron["target_elements"]:
@@ -134,7 +134,7 @@ class RequestsRecorder:
                                 output[target["name"]] = elem.text
                             output_file.write_text(json.dumps(output))
                             if USE_HEALTH_CHECK:
-                                kanihealth.update_health(elem.text)
+                                kanihealth.update_health(cron["name"])
                         else:
                             raise AssertionError
                 else:
