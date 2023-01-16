@@ -20,6 +20,15 @@ __author__ = "fx-kirin <fx.kirin@gmail.com>"
 __all__ = ["RequestsRecorder"]
 
 
+
+USE_HEALTH_CHECK = False
+try:
+    import kanihealth
+    USE_HEALTH_CHECK = True
+except ImportError:
+    pass
+
+
 class RequestsRecorder:
     def __init__(self, headers=None):
         self.log = logging.getLogger(self.__class__.__name__)
@@ -112,6 +121,8 @@ class RequestsRecorder:
                                 df.to_csv(output_file)
                             else:
                                 output_file.write_text(elem.text)
+                                if USE_HEALTH_CHECK:
+                                    kanihealth.update_health(elem.text)
                         elif isinstance(cron["target_elements"], list):
                             output = {}
                             for target in cron["target_elements"]:
@@ -122,6 +133,8 @@ class RequestsRecorder:
                                 elem = elem.find(target["element"])[target["index"]]
                                 output[target["name"]] = elem.text
                             output_file.write_text(json.dumps(output))
+                            if USE_HEALTH_CHECK:
+                                kanihealth.update_health(elem.text)
                         else:
                             raise AssertionError
             except Exception:
